@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <Braccio.h>
 #include <Servo.h>
 
@@ -6,12 +7,6 @@ Servo servos[numServos]; // Array of servo objects
 int servoAngles[numServos]; // Array to store servo angles
 int servoLedPin[numServos -1] = {2, 4, 7, 8 ,13}; // Array of servo LED indicators
 int selectedServo = 0; // Currently selected servo (o o numServos -1)
-
-const int redButtonPin = 15;
-const int yellowButtonPin = 17;
-const int greenButtonPin = 18;
-const int blueButtonPin = 16;
-const int whiteButtonPin = 19;
 
 const int basePin = 11;
 const int shoulderPin = 10;
@@ -25,6 +20,33 @@ const int shoulderLedPin = 4;
 const int elbowLedPin = 7;
 const int wristvLedPin = 8;
 const int wristrLedPin = 13;
+
+class Button {
+public:
+  Button(int pin, unsigned long debounceDelay = 50) : pin(pin), debounceDelay(debounceDelay) {
+    pinMode(pin, INPUT);
+  }
+  
+  bool isPressed() {
+   if(millis() - lastDebounceTime > debounceDelay) {
+     int buttonState = digitalRead(pin);
+     if (buttonState != lastButtonState) {
+       lastDebounceTime = millis();
+       lastButtonState = buttonState;
+       if (buttonState == HIGH) {
+         return true;
+       }
+     }
+   }
+   return false;
+  }
+  
+private:
+  int pin;
+  int lastButtonState = LOW;
+  unsigned long lastDebounceTime = 0;
+  unsigned long debounceDelay;
+};
 
 class BraccioControl {
 public:
@@ -67,38 +89,23 @@ public:
   
 };
 
-//BraccioControl tinkerkit;
+BraccioControl tinkerkit;
 
-int motorSelector = 0;
-int yellowButtonState = 0;
-bool yellowButtonFlag = false;
-
-Servo base;
-Servo shoulder;
-Servo elbow;
-Servo wrist_rot;
-Servo wrist_ver;
-Servo gripper;
-
-int baseDeg = 0;
-int ShoulderDeg = 0;
-int elbowDeg = 0;
-int wristvDeg = 0;
-int wristreDeg = 0;
+Button redButton(15);
+Button yellowButton(17);
+Button greenButton(18);
+Button blueButton(16);
+Button whiteButton(19);
 
 void setup(){
 
-//  pinMode(redButtonPin, INPUT);
-//  pinMode(yellowButtonPin, INPUT);
-//  pinMode(greenButtonPin, INPUT);
-//  pinMode(blueButtonPin, INPUT);
-//  pinMode(whiteButtonPin, INPUT);
-//  
-//  tinkerkit.attachServos(basePin, shoulderPin, elbowPin, wristRotPin, wristVerPin, gripperPin);
-//
-//  for (int i=0; i<numServos-1; i++) {
-//    pinMode(servoLedPin[i], OUTPUT);
-//  }
+  Serial.begin(9600);
+    
+  tinkerkit.attachServos(basePin, shoulderPin, elbowPin, wristRotPin, wristVerPin, gripperPin);
+
+  for (int i=0; i<numServos-1; i++) {
+    pinMode(servoLedPin[i], OUTPUT);
+  }
 
   pinMode(baseLedPin, OUTPUT);
   pinMode(shoulderLedPin, OUTPUT);
@@ -106,102 +113,32 @@ void setup(){
   pinMode(wristvLedPin, OUTPUT);
   pinMode(wristrLedPin, OUTPUT);
 
-  Braccio.begin();
+//  Braccio.begin();
 
 }
 
 void loop(){
-//  if (digitalRead(yellowButtonPin) == HIGH) {
-//    tinkerkit.selectNextServo();
-//  }
-//
-//  int angle = tinkerkit.getSelectedServoAngle();
-//
-//  if (digitalRead(redButtonPin) == HIGH) {
-//    angle += 5;
-//  } 
-//  else if (digitalRead(greenButtonPin) == HIGH) {
-//    angle -= 5;
-//  }
-//
-//  tinkerkit.moveSelectedServo(angle);
-//}  
-
-  yellowButtonState = digitalRead(yellowButtonPin);
-
-  if (yellowButtonState == HIGH && !yellowButtonFlag) {
-    
-    motorSelector++;
-    yellowButtonFlag = true;
-    
-    if (motorSelector > 5) {
-      motorSelector = 0;
-    }
-    
-  } else if (yellowButtonState == LOW) {
-    yellowButtonFlag = false;
+  int angle = tinkerkit.getSelectedServoAngle();
+  
+  if (yellowButton.isPressed()) {
+    Serial.println("yellow button pressed, angle = " + String(angle));
+    tinkerkit.selectNextServo();
+    Serial.println("selected servo = " + String(selectedServo));
+    Serial.println("servo angle = " + String(servoAngles[selectedServo]));
   }
   
-  switch (motorSelector) {
-    case 0:
-      digitalWrite(baseLedPin, LOW);
-      digitalWrite(shoulderLedPin, LOW);
-      digitalWrite(elbowLedPin, LOW);
-      digitalWrite(wristvLedPin, LOW);
-      digitalWrite(wristrLedPin, LOW);
-      base.write(0);
-      shoulder.write(40);
-      elbow.write(180);
-      wrist_ver.write(170);
-      wrist_rot.write(0);
-      gripper.write(73);
-      break;
-    case 1:
-      digitalWrite(baseLedPin, HIGH);
-      digitalWrite(shoulderLedPin, LOW);
-      digitalWrite(elbowLedPin, LOW);
-      digitalWrite(wristvLedPin, LOW);
-      digitalWrite(wristrLedPin, LOW);
-      base.write(90);
-      break;
-    case 2:
-      digitalWrite(baseLedPin, LOW);
-      digitalWrite(shoulderLedPin, HIGH);
-      digitalWrite(elbowLedPin, LOW);
-      digitalWrite(wristvLedPin, LOW);
-      digitalWrite(wristrLedPin, LOW);
-      base.write(-90);
-      break;
-    case 3:
-      digitalWrite(baseLedPin, LOW);
-      digitalWrite(shoulderLedPin, LOW);
-      digitalWrite(elbowLedPin, HIGH);
-      digitalWrite(wristvLedPin, LOW);
-      digitalWrite(wristrLedPin, LOW);
-      base.write(180);
-      break;
-    case 4:
-      digitalWrite(baseLedPin, LOW);
-      digitalWrite(shoulderLedPin, LOW);
-      digitalWrite(elbowLedPin, LOW);
-      digitalWrite(wristvLedPin, HIGH);
-      digitalWrite(wristrLedPin, LOW);
-      wrist_ver.write(90);
-      break;
-    case 5:
-      digitalWrite(baseLedPin, LOW);
-      digitalWrite(shoulderLedPin, LOW);
-      digitalWrite(elbowLedPin, LOW);
-      digitalWrite(wristvLedPin, LOW);
-      digitalWrite(wristrLedPin, HIGH);
-      break;
+  if (redButton.isPressed()) {
+    Serial.println("red button pressed, angle = " + String(angle));
+    angle += 5;
+//    tinkerkit.moveSelectedServo(angle);
+  } 
+  else if (greenButton.isPressed()) {
+    Serial.println("green button pressed, angle = " + String(angle));
+    angle -= 5;
+//    tinkerkit.moveSelectedServo(angle);
   }
-      
-//  Braccio.ServoMovement(20, 0, 40, 180, 170, 0, 73);
-//  delay(1000);
-//  Braccio.ServoMovement(20, 180, 165, 0, 0, 180, 10);
-//  delay(1000);
-//  delay(100);
-}
 
+//  tinkerkit.moveSelectedServo(angle);
+  
+}  
 
