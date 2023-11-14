@@ -2,6 +2,7 @@
 #include <Braccio.h>
 #include <Servo.h>
 
+Servo base;
 const int numServos = 6; // Number of servo motors
 Servo servos[numServos]; // Array of servo objects
 int servoAngles[numServos]; // Array to store servo angles
@@ -14,12 +15,6 @@ const int elbowPin = 9;
 const int wristRotPin = 5;
 const int wristVerPin = 6;
 const int gripperPin = 3;
-
-const int baseLedPin = 2;
-const int shoulderLedPin = 4;
-const int elbowLedPin = 7;
-const int wristvLedPin = 8;
-const int wristrLedPin = 13;
 
 class Button {
 public:
@@ -100,27 +95,24 @@ Button whiteButton(19);
 void setup(){
 
   Serial.begin(9600);
-    
+  base.attach(11);
+  
   tinkerkit.attachServos(basePin, shoulderPin, elbowPin, wristRotPin, wristVerPin, gripperPin);
 
   for (int i=0; i<numServos-1; i++) {
     pinMode(servoLedPin[i], OUTPUT);
   }
 
-  pinMode(baseLedPin, OUTPUT);
-  pinMode(shoulderLedPin, OUTPUT);
-  pinMode(elbowLedPin, OUTPUT);
-  pinMode(wristvLedPin, OUTPUT);
-  pinMode(wristrLedPin, OUTPUT);
-
 //  Braccio.begin();
 
 }
 
 void loop(){
-  int angle = tinkerkit.getSelectedServoAngle();
+  
+  int angle;
   
   if (yellowButton.isPressed()) {
+    int angle = tinkerkit.getSelectedServoAngle();
     Serial.println("yellow button pressed, angle = " + String(angle));
     tinkerkit.selectNextServo();
     Serial.println("selected servo = " + String(selectedServo));
@@ -130,11 +122,13 @@ void loop(){
   if (redButton.isPressed()) {
     Serial.println("red button pressed, angle = " + String(angle));
     angle += 5;
+    base.write(angle);
 //    tinkerkit.moveSelectedServo(angle);
   } 
   else if (greenButton.isPressed()) {
     Serial.println("green button pressed, angle = " + String(angle));
     angle -= 5;
+    base.write(angle);
 //    tinkerkit.moveSelectedServo(angle);
   }
 
