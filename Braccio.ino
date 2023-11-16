@@ -42,6 +42,10 @@ public:
    return false;
   }
   
+  bool isOn() {
+    return digitalRead(pin);
+  }
+  
 private:
   int pin;
   int lastButtonState = LOW;
@@ -131,6 +135,13 @@ LED elbowLED(7);
 LED wristVLED(8);
 LED wristRLED(13);
 
+int baseAngle = 0;
+int shoulderAngle = 40;
+int elbowAngle = 180;
+int wristVerAngle = 170;
+int wristRotAngle = 0;
+int angle = 180;
+  
 void setup(){
 
   Serial.begin(9600);
@@ -148,8 +159,6 @@ void setup(){
 
 void loop(){
   
-  int angle;
-  
   if (yellowButton.isPressed()) {
 //    int angle = tinkerkit.getSelectedServoAngle();
     Serial.println("yellow button pressed, angle = " + String(angle));
@@ -164,14 +173,29 @@ void loop(){
 //    angle += 5;
 //    base.write(angle);
 //    tinkerkit.moveSelectedServo(angle);
-  } 
-  else if (greenButton.isPressed()) {
+  } else if (greenButton.isPressed()) {
     base.write(180);
 //    Serial.println("green button pressed, angle = " + String(angle));
 //    angle -= 5;
 //    base.write(angle);
 //    tinkerkit.moveSelectedServo(angle);
-  }
+  } 
+  
+  if (blueButton.isOn()) {
+    if (angle<180) {
+      angle++;
+    }
+    elbow.write(angle);
+    delay(50);
+  } 
+  
+  if (whiteButton.isOn()) {
+    if (angle>0) {
+      angle--;
+    }
+    elbow.write(angle);
+    delay(50);
+  } 
 
 //  tinkerkit.moveSelectedServo(angle);
   
